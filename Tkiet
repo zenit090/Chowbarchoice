@@ -1,0 +1,647 @@
+
+--[[
+    TKIET HUB - FISCH EDITION
+    UI based on the supplied Speed Library design.
+    Standalone Roblox LocalScript.
+]]
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local TKIET = {
+    Color = Color3.fromRGB(250, 7, 7),
+    Unloaded = false,
+    Settings = {}
+}
+
+local function Create(class, props, parent)
+    local obj = Instance.new(class)
+    for k, v in pairs(props or {}) do
+        obj[k] = v
+    end
+    obj.Parent = parent
+    return obj
+end
+
+local function Corner(parent, radius)
+    Create("UICorner", {
+        CornerRadius = UDim.new(0, radius or 7)
+    }, parent)
+end
+
+local function Stroke(parent, color)
+    Create("UIStroke", {
+        Color = color or Color3.fromRGB(55,55,55),
+        Thickness = 1
+    }, parent)
+end
+
+-- GUI
+local Gui = Create("ScreenGui", {
+    Name = "TKIET_HUB",
+    ResetOnSpawn = false,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+}, PlayerGui)
+
+-- Main
+local Main = Create("Frame", {
+    Name = "Main",
+    Size = UDim2.fromOffset(570, 370),
+    Position = UDim2.new(0.5,-285,0.5,-185),
+    BackgroundColor3 = Color3.fromRGB(15,15,15),
+    BorderSizePixel = 0
+}, Gui)
+
+Corner(Main, 9)
+Stroke(Main)
+
+-- Topbar
+local Top = Create("Frame", {
+    Size = UDim2.new(1,0,0,42),
+    BackgroundColor3 = Color3.fromRGB(20,20,20),
+    BorderSizePixel = 0
+}, Main)
+
+Corner(Top, 9)
+
+Create("TextLabel", {
+    Text = "TKIET",
+    Font = Enum.Font.GothamBold,
+    TextSize = 17,
+    TextColor3 = Color3.new(1,1,1),
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(13,0),
+    Size = UDim2.fromOffset(65,42)
+}, Top)
+
+Create("TextLabel", {
+    Text = "FISCH",
+    Font = Enum.Font.GothamBold,
+    TextSize = 13,
+    TextColor3 = TKIET.Color,
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(76,0),
+    Size = UDim2.fromOffset(70,42)
+}, Top)
+
+local Min = Create("TextButton", {
+    Text = "-",
+    Font = Enum.Font.GothamBold,
+    TextSize = 20,
+    TextColor3 = Color3.new(1,1,1),
+    BackgroundTransparency = 1,
+    Position = UDim2.new(1,-75,0,3),
+    Size = UDim2.fromOffset(32,32)
+}, Top)
+
+local Close = Create("TextButton", {
+    Text = "X",
+    Font = Enum.Font.GothamBold,
+    TextSize = 15,
+    TextColor3 = Color3.new(1,1,1),
+    BackgroundTransparency = 1,
+    Position = UDim2.new(1,-39,0,3),
+    Size = UDim2.fromOffset(32,32)
+}, Top)
+
+-- Drag
+do
+    local dragging = false
+    local dragStart, startPosition
+
+    Top.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPosition = Main.Position
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (
+            input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch
+        ) then
+            local delta = input.Position - dragStart
+            Main.Position = UDim2.new(
+                startPosition.X.Scale,
+                startPosition.X.Offset + delta.X,
+                startPosition.Y.Scale,
+                startPosition.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+-- Minimize
+local minimized = false
+
+Min.Activated:Connect(function()
+    minimized = not minimized
+    Main.Size = minimized
+        and UDim2.fromOffset(570,42)
+        or UDim2.fromOffset(570,370)
+end)
+
+Close.Activated:Connect(function()
+    TKIET.Unloaded = true
+    Gui:Destroy()
+end)
+
+-- Sidebar
+local Sidebar = Create("Frame", {
+    Position = UDim2.fromOffset(10,52),
+    Size = UDim2.new(0,135,1,-62),
+    BackgroundColor3 = Color3.fromRGB(20,20,20),
+    BorderSizePixel = 0
+}, Main)
+
+Corner(Sidebar, 7)
+
+local TabLayout = Create("UIListLayout", {
+    Padding = UDim.new(0,5),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, Sidebar)
+
+Create("UIPadding", {
+    PaddingTop = UDim.new(0,9),
+    PaddingLeft = UDim.new(0,7),
+    PaddingRight = UDim.new(0,7)
+}, Sidebar)
+
+-- Content
+local Content = Create("ScrollingFrame", {
+    Position = UDim2.fromOffset(155,52),
+    Size = UDim2.new(1,-165,1,-62),
+    BackgroundColor3 = Color3.fromRGB(20,20,20),
+    BorderSizePixel = 0,
+    ScrollBarThickness = 3,
+    ScrollBarImageColor3 = TKIET.Color,
+    CanvasSize = UDim2.new(0,0,0,0)
+}, Main)
+
+Corner(Content,7)
+
+local ContentLayout = Create("UIListLayout", {
+    Padding = UDim.new(0,8),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, Content)
+
+Create("UIPadding", {
+    PaddingTop = UDim.new(0,12),
+    PaddingLeft = UDim.new(0,12),
+    PaddingRight = UDim.new(0,12),
+    PaddingBottom = UDim.new(0,12)
+}, Content)
+
+ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Content.CanvasSize = UDim2.fromOffset(
+        0, ContentLayout.AbsoluteContentSize.Y + 25
+    )
+end)
+
+local function ClearContent()
+    for _,v in ipairs(Content:GetChildren()) do
+        if v ~= ContentLayout and v.Name ~= "UIPadding" then
+            v:Destroy()
+        end
+    end
+end
+
+-- Notification
+function TKIET:Notify(title, message)
+    local Frame = Create("Frame", {
+        Size = UDim2.fromOffset(260,65),
+        Position = UDim2.new(1,-275,1,-85),
+        BackgroundColor3 = Color3.fromRGB(25,25,25),
+        BorderSizePixel = 0
+    }, Gui)
+
+    Corner(Frame,8)
+    Stroke(Frame,TKIET.Color)
+
+    Create("TextLabel", {
+        Text = title,
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        TextColor3 = TKIET.Color,
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(10,5),
+        Size = UDim2.new(1,-20,0,22),
+        TextXAlignment = Enum.TextXAlignment.Left
+    },Frame)
+
+    Create("TextLabel", {
+        Text = message,
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        TextColor3 = Color3.fromRGB(200,200,200),
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(10,28),
+        Size = UDim2.new(1,-20,0,25),
+        TextXAlignment = Enum.TextXAlignment.Left
+    },Frame)
+
+    task.delay(3,function()
+        if Frame.Parent then
+            local tween = TweenService:Create(
+                Frame,
+                TweenInfo.new(0.25),
+                {BackgroundTransparency = 1}
+            )
+            tween:Play()
+            tween.Completed:Wait()
+            Frame:Destroy()
+        end
+    end)
+end
+
+-- Components
+local function AddTitle(text)
+    Create("TextLabel", {
+        Text = text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        TextColor3 = TKIET.Color,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1,0,0,25),
+        TextXAlignment = Enum.TextXAlignment.Left
+    },Content)
+end
+
+local function AddToggle(name, default, callback)
+    local Row = Create("Frame", {
+        Size = UDim2.new(1,0,0,38),
+        BackgroundColor3 = Color3.fromRGB(29,29,29),
+        BorderSizePixel = 0
+    },Content)
+
+    Corner(Row,6)
+
+    Create("TextLabel", {
+        Text = name,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextColor3 = Color3.new(1,1,1),
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(10,0),
+        Size = UDim2.new(1,-65,1,0),
+        TextXAlignment = Enum.TextXAlignment.Left
+    },Row)
+
+    local Switch = Create("TextButton", {
+        Text = "",
+        Size = UDim2.fromOffset(39,21),
+        Position = UDim2.new(1,-49,0.5,-10),
+        BackgroundColor3 = default and TKIET.Color
+            or Color3.fromRGB(65,65,65),
+        BorderSizePixel = 0,
+        AutoButtonColor = false
+    },Row)
+
+    Corner(Switch,20)
+
+    local Circle = Create("Frame", {
+        Size = UDim2.fromOffset(15,15),
+        Position = default
+            and UDim2.new(1,-18,0.5,-7)
+            or UDim2.fromOffset(3,3),
+        BackgroundColor3 = Color3.new(1,1,1),
+        BorderSizePixel = 0
+    },Switch)
+
+    Corner(Circle,20)
+
+    TKIET.Settings[name] = default
+
+    Switch.Activated:Connect(function()
+        local value = not TKIET.Settings[name]
+        TKIET.Settings[name] = value
+
+        TweenService:Create(Switch,TweenInfo.new(0.15),{
+            BackgroundColor3 = value
+                and TKIET.Color
+                or Color3.fromRGB(65,65,65)
+        }):Play()
+
+        TweenService:Create(Circle,TweenInfo.new(0.15),{
+            Position = value
+                and UDim2.new(1,-18,0.5,-7)
+                or UDim2.fromOffset(3,3)
+        }):Play()
+
+        if callback then
+            callback(value)
+        end
+    end)
+
+    return Switch
+end
+
+local function AddButton(name, callback)
+    local Button = Create("TextButton", {
+        Text = name,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        TextColor3 = Color3.new(1,1,1),
+        BackgroundColor3 = Color3.fromRGB(40,40,40),
+        Size = UDim2.new(1,0,0,35),
+        BorderSizePixel = 0
+    },Content)
+
+    Corner(Button,6)
+
+    Button.Activated:Connect(function()
+        if callback then callback() end
+    end)
+
+    return Button
+end
+
+local function AddInput(name, placeholder, callback)
+    local Box = Create("Frame", {
+        Size = UDim2.new(1,0,0,55),
+        BackgroundTransparency = 1
+    },Content)
+
+    Create("TextLabel", {
+        Text = name,
+        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        TextColor3 = Color3.new(1,1,1),
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1,0,0,20),
+        TextXAlignment = Enum.TextXAlignment.Left
+    },Box)
+
+    local Input = Create("TextBox", {
+        PlaceholderText = placeholder,
+        Text = "",
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextColor3 = Color3.new(1,1,1),
+        PlaceholderColor3 = Color3.fromRGB(130,130,130),
+        BackgroundColor3 = Color3.fromRGB(35,35,35),
+        Position = UDim2.fromOffset(0,23),
+        Size = UDim2.new(1,0,0,30),
+        ClearTextOnFocus = false
+    },Box)
+
+    Corner(Input,5)
+
+    Input.FocusLost:Connect(function(enterPressed)
+        if enterPressed and callback then
+            callback(Input.Text)
+        end
+    end)
+
+    return Input
+end
+
+local function AddDropdown(name, options, callback)
+    local selected = 1
+
+    local Button = Create("TextButton", {
+        Text = name .. ": " .. tostring(options[selected]),
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextColor3 = Color3.new(1,1,1),
+        BackgroundColor3 = Color3.fromRGB(35,35,35),
+        Size = UDim2.new(1,0,0,36),
+        BorderSizePixel = 0
+    },Content)
+
+    Corner(Button,5)
+
+    Button.Activated:Connect(function()
+        selected = selected % #options + 1
+        Button.Text = name .. ": " .. tostring(options[selected])
+        if callback then
+            callback(options[selected])
+        end
+    end)
+
+    return Button
+end
+
+-- Tabs
+local Tabs = {
+    "Auto Farm",
+    "Fishing",
+    "Teleport",
+    "Config",
+    "Misc",
+    "Player Utilities"
+}
+
+local function ShowTab(tab)
+    ClearContent()
+
+    if tab == "Auto Farm" then
+        AddTitle("AUTO FARM")
+
+        AddToggle("Auto Cast",false)
+        AddToggle("Auto Shake",false)
+        AddToggle("Auto Reel",false)
+        AddToggle("Instant Bobber",false)
+
+        AddButton("Start Auto Farm",function()
+            TKIET:Notify("TKIET","UI configuration only.")
+        end)
+
+        AddButton("Stop Auto Farm",function()
+            TKIET:Notify("TKIET","Auto Farm configuration stopped.")
+        end)
+
+    elseif tab == "Fishing" then
+        AddTitle("FISHING")
+
+        AddDropdown("Reel Mode",{
+            "Legit",
+            "Instant"
+        },function(value)
+            TKIET.Settings.ReelMode = value
+        end)
+
+        AddToggle("Fishing Notifications",true)
+        AddToggle("Show Fishing Status",true)
+        AddToggle("Show Rod Information",true)
+
+        AddButton("Refresh Information",function()
+            local character = Player.Character
+            local tool = character and character:FindFirstChildOfClass("Tool")
+            TKIET:Notify("Fishing",tool and
+                ("Equipped: "..tool.Name) or "No tool equipped.")
+        end)
+
+    elseif tab == "Teleport" then
+        AddTitle("ISLAND SEARCH")
+
+        AddInput("Search Location","Enter island name...",function(value)
+            TKIET.Settings.TeleportSearch = value
+            TKIET:Notify("Teleport","Search saved: "..value)
+        end)
+
+        AddButton("Refresh Location List",function()
+            TKIET:Notify("Teleport","Search configuration refreshed.")
+        end)
+
+        AddTitle("AVAILABLE LOCATIONS")
+
+        local locations = {
+            "Moosewood",
+            "Roslit Bay",
+            "Sunstone Island",
+            "Terrapin Island",
+            "Forsaken Shores",
+            "Snowcap Island",
+            "Mushgrove Swamp",
+            "Statue of Sovereignty",
+            "The Arch",
+            "Castaway Cliffs",
+            "Ancient Isle",
+            "Vertigo",
+            "Depths"
+        }
+
+        for _,location in ipairs(locations) do
+            AddButton(location,function()
+                TKIET:Notify("Location",location.." selected.")
+            end)
+        end
+
+    elseif tab == "Config" then
+        AddTitle("CONFIGURATION")
+
+        AddDropdown("Reel Mode",{
+            "Legit",
+            "Instant"
+        },function(value)
+            TKIET.Settings.ReelMode = value
+        end)
+
+        AddToggle("Auto Farm Notifications",true)
+        AddToggle("Show Status",true)
+        AddToggle("Compact Interface",false)
+
+        AddButton("Reset Configuration",function()
+            TKIET.Settings = {}
+            TKIET:Notify("Config","Configuration reset.")
+        end)
+
+    elseif tab == "Misc" then
+        AddTitle("MISCELLANEOUS")
+
+        AddToggle("Anti AFK Setting",false)
+        AddToggle("Notifications",true)
+
+        AddButton("Show Notification",function()
+            TKIET:Notify("TKIET HUB","Welcome to TKIET Fisch.")
+        end)
+
+        AddButton("Unload UI",function()
+            TKIET.Unloaded = true
+            Gui:Destroy()
+        end)
+
+    elseif tab == "Player Utilities" then
+        AddTitle("PLAYER UTILITIES")
+
+        AddInput("WalkSpeed","16",function(value)
+            local number = tonumber(value)
+            if not number or number < 0 or number > 100 then
+                TKIET:Notify("Error","Enter a value from 0 to 100.")
+                return
+            end
+
+            local character = Player.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+            if humanoid then
+                humanoid.WalkSpeed = number
+                TKIET:Notify("Player","WalkSpeed updated.")
+            end
+        end)
+
+        AddInput("JumpPower","50",function(value)
+            local number = tonumber(value)
+            if not number or number < 0 or number > 150 then
+                TKIET:Notify("Error","Enter a value from 0 to 150.")
+                return
+            end
+
+            local character = Player.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+            if humanoid then
+                humanoid.UseJumpPower = true
+                humanoid.JumpPower = number
+                TKIET:Notify("Player","JumpPower updated.")
+            end
+        end)
+
+        AddButton("Reset Character",function()
+            local character = Player.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+            if humanoid then
+                humanoid.Health = 0
+            end
+        end)
+    end
+end
+
+-- Create tab buttons
+for _,tab in ipairs(Tabs) do
+    local Button = Create("TextButton", {
+        Text = tab,
+        Font = Enum.Font.GothamBold,
+        TextSize = 11,
+        TextColor3 = Color3.fromRGB(190,190,190),
+        BackgroundColor3 = Color3.fromRGB(29,29,29),
+        Size = UDim2.new(1,0,0,38),
+        BorderSizePixel = 0,
+        AutoButtonColor = false
+    },Sidebar)
+
+    Corner(Button,5)
+
+    Button.Activated:Connect(function()
+        for _,v in ipairs(Sidebar:GetChildren()) do
+            if v:IsA("TextButton") then
+                v.BackgroundColor3 = Color3.fromRGB(29,29,29)
+                v.TextColor3 = Color3.fromRGB(190,190,190)
+            end
+        end
+
+        Button.BackgroundColor3 = Color3.fromRGB(65,25,25)
+        Button.TextColor3 = TKIET.Color
+
+        ShowTab(tab)
+    end)
+end
+
+ShowTab("Auto Farm")
+
+-- Default selected tab
+local first = Sidebar:FindFirstChildOfClass("TextButton")
+if first then
+    first.BackgroundColor3 = Color3.fromRGB(65,25,25)
+    first.TextColor3 = TKIET.Color
+end
+
+TKIET:Notify("TKIET HUB","Fisch interface loaded.")
+
+return TKIET
